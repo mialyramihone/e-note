@@ -1,38 +1,35 @@
-# 🎓 Gestion des Notes Universitaires
+# 🎓 e-Note — Gestion des Notes Universitaires
 
-Une application de **gestion des notes** développée en **Python 3** avec **PyQt5** pour l’interface graphique et **SQLite3** comme base de données locale.
-
----
-
-## 🚀 Fonctionnalités principales
-
-- 🧑‍🎓 Gestion des étudiants (ajout, modification, suppression)
-- 📚 Gestion des matières et coefficients
-- 📝 Enregistrement et consultation des notes
-- 📊 Calcul automatique des moyennes
-- 📈 Visualisation statistique des résultats avec **Matplotlib**
-- 🗂️ Exportation en **PDF**
-- 🎨 Interface graphique claire et professionnelle (style clair, menu latéral)
+Salut 👋 ! Bienvenue dans **e-Note**, ton assistant pratique pour gérer les étudiants, les matières et les notes dans ton université.  
+Cette application est **en Python** avec une interface **PyQt5**, des statistiques graphiques et des bulletins imprimables !  
 
 ---
 
-## 🧩 Technologies utilisées
-
-| Composant | Description |
-|------------|--------------|
-| **Langage** | Python 3 |
-| **Interface** | PyQt5 |
-| **Base de données** | SQLite3 |
-| **Graphiques** | Matplotlib |
-| **Export PDF** | Matplotlib + PdfPages |
-| **Système d’exploitation** | Windows / Linux |
+## ✨ Fonctionnalités magiques ✨
+- 🧑‍🎓 Gestion complète des étudiants (ajout, modification, suppression)  
+- 📚 Gestion des matières avec coefficients  
+- 📝 Enregistrement et suivi des notes  
+- 📊 Calcul automatique des moyennes et statistiques  
+- 🖼️ Graphiques interactifs (barres & camembert)  
+- 🖨️ Impression de bulletins PDF directement depuis l’application  
 
 ---
 
-## ⚙️ Installation
+## 🧩 Technologie derrière la magie
+| Composant | Utilité |
+|------------|--------|
+| Python 3.x | Le cœur de l’application |
+| PyQt5 | Interface graphique stylée |
+| SQLite3 | Base de données locale (gestion_notes.db) |
+| Matplotlib | Graphiques et statistiques |
+| QtPrintSupport | Impression de bulletins PDF |
+| Icône & logo | Pour une touche pro ✨ |
 
-### 1️⃣ Cloner le projet depuis GitHub
+---
 
+## 🚀 Démarrage rapide
+
+1️⃣ Assure-toi d’avoir Python 3 installé.  
+2️⃣ Installe les dépendances dans ton terminal :
 ```bash
-git clone https://github.com/mialyramihone/e-note.git
-cd e-note
+pip install PyQt5 matplotlib
