@@ -517,34 +517,7 @@ class MainWindow(QMainWindow):
         self.db = Database()
         self._init_ui()
         
-    def main():
-        app = QApplication(sys.argv)
-        
-        
-        if sys.platform == "win32":
-            try:
-                import ctypes
-                myappid = 'enote.application.1.0'
-                ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
-            except Exception as e:
-                print(f"Note: {e}")
-        
-        app.setStyle('Fusion')
-        
-        
-        palette = QPalette()
-        palette.setColor(QPalette.Window, QColor(240, 240, 240))
-        app.setPalette(palette)
-        
-        
-        app.setWindowIcon(QIcon("logo.ico"))
-        
-        window = MainWindow()
-        window.show()
-        
-        sys.exit(app.exec_())
-
-        
+    
 
     def _init_ui(self):
         central = QWidget()
