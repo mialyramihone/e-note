@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
     QLabel, QLineEdit, QMessageBox, QComboBox, QTableWidget, QTableWidgetItem,
     QSpinBox, QDoubleSpinBox, QGroupBox, QFileDialog, QTextEdit, QDialog,
-    QTextBrowser
+    QTextBrowser, QDialog
 )
 
 from PyQt5.QtGui import QPalette, QColor, QIcon 
@@ -17,6 +17,168 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_pdf import PdfPages
 from datetime import datetime
 import os
+
+DEFAULT_USERNAME = "admin"
+DEFAULT_PASSWORD = "admin123"
+
+class LoginDialog(QDialog):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("e-Note")
+        self.setFixedSize(400, 400)
+        self.setModal(True)
+        self.setWindowIcon(QIcon("logo.ico"))
+        
+        layout = QVBoxLayout()
+        layout.setContentsMargins(40, 40, 40, 30)
+        layout.setSpacing(25)
+        
+        # En-tête
+        header_layout = QVBoxLayout()
+        header_layout.setSpacing(10)
+        
+        title = QLabel("Connexion")
+        title.setAlignment(Qt.AlignCenter)
+        title.setStyleSheet("""
+            QLabel {
+                font-size: 28px;
+                font-weight: bold;
+                color: #1d1d1f;
+                margin-bottom: 5px;
+            }
+        """)
+        
+        subtitle = QLabel("Connectez-vous à votre compte")
+        subtitle.setAlignment(Qt.AlignCenter)
+        subtitle.setStyleSheet("""
+            QLabel {
+                color: #86868b;
+                font-size: 14px;
+            }
+        """)
+        
+        header_layout.addWidget(title)
+        header_layout.addWidget(subtitle)
+        layout.addLayout(header_layout)
+        
+        # Formulaire
+        form_layout = QVBoxLayout()
+        form_layout.setSpacing(20)
+        
+        # Utilisateur
+        user_layout = QVBoxLayout()
+        user_layout.setSpacing(8)
+        user_label = QLabel("Utilisateur")
+        user_label.setStyleSheet("font-weight: bold; color: #1d1d1f;")
+        self.username_input = QLineEdit()
+        self.username_input.setPlaceholderText("Entrez votre nom d'utilisateur")
+        self.username_input.setMinimumHeight(44)
+        user_layout.addWidget(user_label)
+        user_layout.addWidget(self.username_input)
+        
+        # Mot de passe
+        pwd_layout = QVBoxLayout()
+        pwd_layout.setSpacing(8)
+        pwd_label = QLabel("Mot de passe")
+        pwd_label.setStyleSheet("font-weight: bold; color: #1d1d1f;")
+        self.password_input = QLineEdit()
+        self.password_input.setEchoMode(QLineEdit.Password)
+        self.password_input.setPlaceholderText("Entrez votre mot de passe")
+        self.password_input.setMinimumHeight(44)
+        pwd_layout.addWidget(pwd_label)
+        pwd_layout.addWidget(self.password_input)
+        
+        form_layout.addLayout(user_layout)
+        form_layout.addLayout(pwd_layout)
+        layout.addLayout(form_layout)
+        
+        btn_layout = QHBoxLayout()
+        btn_layout.setSpacing(12)
+        
+        self.cancel_btn = QPushButton("Annuler")
+        self.login_btn = QPushButton("Se connecter")
+        
+        self.login_btn.clicked.connect(self.authenticate)
+        self.cancel_btn.clicked.connect(self.reject)
+        
+        btn_layout.addWidget(self.cancel_btn)
+        btn_layout.addWidget(self.login_btn)
+        layout.addLayout(btn_layout)
+        
+        footer = QLabel("Version 1.0")
+        footer.setAlignment(Qt.AlignCenter)
+        footer.setStyleSheet("""
+            QLabel {
+                color: #86868b;
+                font-size: 10px;
+                margin-top: 20px;
+                padding: 4px 12px;
+                border-radius: 12px;
+                font-weight: 500;
+            }
+        """)
+        layout.addWidget(footer)
+        
+        self.setLayout(layout)
+        self.password_input.returnPressed.connect(self.authenticate)
+        
+        self.setStyleSheet("""
+            QDialog {
+                background-color: #ffffff;
+                font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+            }
+            QPushButton {
+                border: none;
+                padding: 12px 24px;
+                border-radius: 8px;
+                font-weight: 500;
+                font-size: 14px;
+                min-width: 100px;
+            }
+            QPushButton#login_btn {
+                background-color: #007AFF;
+                color: white;
+            }
+            QPushButton#login_btn:hover {
+                background-color: #0056CC;
+            }
+            QPushButton#cancel_btn {
+                background-color: #f2f2f7;
+                color: #1d1d1f;
+            }
+            QPushButton#cancel_btn:hover {
+                background-color: #e5e5ea;
+            }
+            QLineEdit {
+                padding: 12px 16px;
+                border: 1px solid #c6c6c8;
+                border-radius: 8px;
+                font-size: 14px;
+                background-color: #ffffff;
+            }
+            QLineEdit:focus {
+                border-color: #007AFF;
+                outline: none;
+            }
+            QLineEdit:placeholder {
+                color: #c6c6c8;
+            }
+        """)
+        
+        self.login_btn.setObjectName("login_btn")
+        self.cancel_btn.setObjectName("cancel_btn")
+        
+    def authenticate(self):
+        username = self.username_input.text().strip()
+        password = self.password_input.text().strip()
+        
+        if username == DEFAULT_USERNAME and password == DEFAULT_PASSWORD:
+            self.accept()
+        else:
+            QMessageBox.warning(self, "Erreur d'authentification", 
+                              "Nom d'utilisateur ou mot de passe incorrect!")
+            self.password_input.clear()
+            self.password_input.setFocus()
 
 DB_FILE = "gestion_notes.db"
 
@@ -62,16 +224,13 @@ class Database:
         self.conn.commit()
 
     def get_total_notes_count(self):
-            """Retourne le nombre total de notes dans la base"""
             self._enable_foreign_keys()
             cur = self.conn.cursor()
             cur.execute("SELECT COUNT(*) FROM notes")
             return cur.fetchone()[0]
 
     def update_database_schema(self):
-        """Mettre à jour le schéma de la base de données si nécessaire"""
         cur = self.conn.cursor()
-        
         
         try:
             cur.execute("""
@@ -97,13 +256,12 @@ class Database:
                 )
                 """)
                 
-                
                 cur.execute("""
                 INSERT INTO notes_temp (codeMat, n_inscription, annee, note)
                 SELECT codeMat, n_inscription, annee, note
                 FROM notes
                 GROUP BY codeMat, n_inscription, annee
-                HAVING MAX(id)  -- Garder la note la plus récente en cas de doublon
+                HAVING MAX(id)
                 """)
                 
                 cur.execute("DROP TABLE notes")
@@ -429,7 +587,6 @@ class MatplotlibWidget(QWidget):
             statistics['sans_notes']
         ]
         
-        
         if sum(sizes) == 0:
             ax = self.figure.add_subplot(111)
             ax.text(0.5, 0.5, 'Aucune donnée disponible\nAjoutez des étudiants et des notes pour voir les statistiques',
@@ -441,18 +598,15 @@ class MatplotlibWidget(QWidget):
         
         colors = ['#2ecc71', '#f39c12', '#e74c3c', '#95a5a6']
         
-        
         ax1 = self.figure.add_subplot(121)
         bars = ax1.bar(labels, sizes, color=colors)
         ax1.set_title('Nombre d\'étudiants par statut')
         ax1.set_ylabel('Nombre d\'étudiants')
         ax1.set_xlabel('Statut')
         
-        
         for bar, value in zip(bars, sizes):
             ax1.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1,
                     f'{value}', ha='center', va='bottom')
-        
         
         ax2 = self.figure.add_subplot(122)
         explode = (0.1, 0, 0, 0)  
@@ -513,21 +667,47 @@ class MainWindow(QMainWindow):
 
         self.setWindowIcon(QIcon("logo.ico"))
 
-
         self.db = Database()
         self._init_ui()
         
-    
-
     def _init_ui(self):
         central = QWidget()
         layout = QVBoxLayout()
         central.setLayout(layout)
         self.setCentralWidget(central)
 
-        header = QLabel("<h1 style='color: #2c3e50;'>Gestion des Notes</h1>")
-        header.setAlignment(Qt.AlignCenter)
-        layout.addWidget(header)
+
+        header_layout = QHBoxLayout()
+        
+        title = QLabel("<h1 style='color: #2c3e50;'>Gestion des Notes</h1>")
+        title.setAlignment(Qt.AlignLeft)
+        
+        
+        self.logout_btn = QPushButton("Déconnexion")
+        self.logout_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #e74c3c;
+                color: white;
+                font-weight: bold;
+                padding: 8px 16px;
+                border: none;
+                border-radius: 4px;
+                min-width: 100px;
+            }
+            QPushButton:hover {
+                background-color: #c0392b;
+            }
+            QPushButton:pressed {
+                background-color: #a93226;
+            }
+        """)
+        self.logout_btn.clicked.connect(self.logout)
+        
+        header_layout.addWidget(title)
+        header_layout.addStretch()
+        header_layout.addWidget(self.logout_btn)
+        
+        layout.addLayout(header_layout)
 
         menu_layout = QHBoxLayout()
         btn_accueil = QPushButton("Accueil")
@@ -576,6 +756,29 @@ class MainWindow(QMainWindow):
 
         self.show_accueil()
 
+    def logout(self):
+        """Déconnecte l'utilisateur et retourne à l'écran de login"""
+        reply = QMessageBox.question(self, "Déconnexion", 
+                                "Êtes-vous sûr de vouloir vous déconnecter ?",
+                                QMessageBox.Yes | QMessageBox.No,
+                                QMessageBox.No)
+        
+        if reply == QMessageBox.Yes:
+            
+            self.close()
+            
+            self.show_login()
+
+    def show_login(self):
+        """Affiche la fenêtre de login"""
+        login = LoginDialog()
+        if login.exec_() == QDialog.Accepted:
+            
+            self.show()
+        else:
+            
+            QApplication.quit()    
+
     def _darken_color(self, hex_color, percent):
         hex_color = hex_color.lstrip('#')
         r = int(hex_color[0:2], 16)
@@ -617,11 +820,8 @@ class MainWindow(QMainWindow):
             if child.widget():
                 child.widget().deleteLater()
 
-   
-
     def show_accueil(self):
         self.clear_view()
-        
         
         scroll = QtWidgets.QScrollArea()
         scroll.setWidgetResizable(True)
@@ -636,9 +836,7 @@ class MainWindow(QMainWindow):
         title.setAlignment(Qt.AlignCenter)
         v.addWidget(title)
 
-
         total_etudiants = len(self.db.get_etudiants())
-        
         
         niveaux = ["L1", "L2", "L3", "M1", "M2"]
         etudiants_par_niveau = {}
@@ -719,7 +917,6 @@ class MainWindow(QMainWindow):
                     
                     niveau_layout.addWidget(niveau_card)
                 else:
-                    
                     niveau_card = QWidget()
                     niveau_card.setStyleSheet("""
                         QWidget {
@@ -759,7 +956,6 @@ class MainWindow(QMainWindow):
 
             v.addWidget(niveau_group)
             v.addSpacing(20)
-
 
         filter_group = QGroupBox("Filtres pour les Graphiques")
         filter_group.setStyleSheet("""
@@ -803,8 +999,7 @@ class MainWindow(QMainWindow):
         filter_layout.addWidget(btn_export_stats)
         
         v.addWidget(filter_group)
-        v.addSpacing(15) 
-
+        v.addSpacing(15)
 
         self.stats_widget = MatplotlibWidget()
         v.addWidget(self.stats_widget)
@@ -814,14 +1009,11 @@ class MainWindow(QMainWindow):
 
         v.addStretch()
         
-        
         scroll.setWidget(container)
         self.view_layout.addWidget(scroll)
         self.refresh_statistics()
 
-
     def calculate_moyenne_generale(self):
-        """Calcule la moyenne générale de tous les étudiants"""
         try:
             all_students = self.db.get_all_students_with_average()
             students_with_avg = [s for s in all_students if s[4] is not None]
@@ -857,7 +1049,6 @@ class MainWindow(QMainWindow):
         try:
             statistics = self.db.get_statistics(annee=annee, niveau=(niveau if niveau != "Tous les niveaux" else None))
             
-            
             if sum([statistics['admis'], statistics['redoublant'], statistics['exclus'], statistics['sans_notes']]) == 0:
                 QMessageBox.warning(self, "Attention", "Aucune donnée disponible pour l'export.")
                 return
@@ -874,7 +1065,6 @@ class MainWindow(QMainWindow):
                 ]
                 colors = ['#2ecc71', '#f39c12', '#e74c3c', '#95a5a6']
                 
-                
                 plt.subplot(121)
                 bars = plt.bar(labels, sizes, color=colors)
                 plt.title('Nombre d\'étudiants par statut')
@@ -884,7 +1074,6 @@ class MainWindow(QMainWindow):
                 for bar, value in zip(bars, sizes):
                     plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.1,
                             f'{value}', ha='center', va='bottom')
-                
                 
                 plt.subplot(122)
                 explode = (0.1, 0, 0, 0)
@@ -1539,11 +1728,8 @@ class MainWindow(QMainWindow):
         annee = int(self.tbl_notes.item(row, 4).text())
         note = float(self.tbl_notes.item(row, 5).text())
         
-        # Extraire le numéro d'inscription du texte
         n_insc = etudiant_text.split(' - ')[0]
-        # Extraire le code matière du texte
         code_matiere = matiere_text.split(' - ')[0]
-        
         
         idx_etudiant = self.notes_ninsc.findData(n_insc)
         if idx_etudiant >= 0:
@@ -1555,7 +1741,6 @@ class MainWindow(QMainWindow):
         
         self.notes_annee.setValue(annee)
         self.notes_val.setValue(note)
-        
         
         self.current_note_id = note_id
 
@@ -1635,11 +1820,8 @@ class MainWindow(QMainWindow):
         annee = int(self.tbl_notes.item(row, 4).text())
         note = float(self.tbl_notes.item(row, 5).text())
         
-        
         n_insc = etudiant_text.split(' - ')[0]
-        
         code_matiere = matiere_text.split(' - ')[0]
-        
         
         idx_etudiant = self.notes_ninsc.findData(n_insc)
         if idx_etudiant >= 0:
@@ -1686,7 +1868,6 @@ class MainWindow(QMainWindow):
 
         v.addLayout(form_layout)
 
-
         self.tbl_bulletin = QTableWidget()
         self.tbl_bulletin.setColumnCount(4)
         self.tbl_bulletin.setHorizontalHeaderLabels(["Matière", "Coefficient", "Note", "Note pondérée"])
@@ -1705,7 +1886,6 @@ class MainWindow(QMainWindow):
             }
         """)
         v.addWidget(self.tbl_bulletin)
-
 
         info_layout = QHBoxLayout()
         self.lbl_moyenne = QLabel("Moyenne: -")
@@ -1920,7 +2100,6 @@ class MainWindow(QMainWindow):
         n_insc = self.bulletin_ninsc.currentData()
         annee = self.bulletin_annee.value()
         
-        
         etudiant_info = self.db.find_etudiant(n_insc)
         if not etudiant_info:
             QMessageBox.warning(self, "Erreur", "Étudiant non trouvé.")
@@ -1928,13 +2107,10 @@ class MainWindow(QMainWindow):
         
         n_insc, nom, niveau, annee_etud = etudiant_info[0]
         
-        
         notes = self.db.get_notes_for_student(n_insc, annee)
         moyenne_data = self.db.calculate_average_for_student(n_insc, annee)
         
-        
         html_content = self.generate_bulletin_html(n_insc, nom, niveau, annee, notes, moyenne_data)
-        
         
         dialog = BulletinDialog(html_content, self)
         dialog.exec_()
@@ -2125,9 +2301,7 @@ class MainWindow(QMainWindow):
         
         students_with_avg = self.db.get_all_students_with_average(annee=annee, niveau=niveau)
         
-        
         students_with_avg = [s for s in students_with_avg if s[4] is not None]
-        
         
         students_with_avg.sort(key=lambda x: x[4] if x[4] is not None else -1, reverse=True)
         
@@ -2144,17 +2318,13 @@ class MainWindow(QMainWindow):
             self.tbl_classement.setItem(r, 4, QTableWidgetItem(str(annee_etud)))
             self.tbl_classement.setItem(r, 5, QTableWidgetItem(str(moyenne) if moyenne is not None else "N/A"))
             
-            
             if rang == 1:
-                
                 for c in range(6):
                     self.tbl_classement.item(r, c).setBackground(QColor(255, 215, 0))
             elif rang == 2:
-                
                 for c in range(6):
                     self.tbl_classement.item(r, c).setBackground(QColor(192, 192, 192))
             elif rang == 3:
-                
                 for c in range(6):
                     self.tbl_classement.item(r, c).setBackground(QColor(205, 127, 50))
 
@@ -2180,11 +2350,9 @@ class MainWindow(QMainWindow):
             with PdfPages(filename) as pdf:
                 plt.figure(figsize=(12, 10))
                 
-                
                 fig, ax = plt.subplots(figsize=(12, 10))
                 ax.axis('tight')
                 ax.axis('off')
-                
                 
                 table_data = [["Rang", "N° Inscription", "Nom", "Niveau", "Année", "Moyenne"]]
                 
@@ -2198,12 +2366,10 @@ class MainWindow(QMainWindow):
                         f"{moyenne:.2f}" if moyenne is not None else "N/A"
                     ])
                 
-                
                 table = ax.table(cellText=table_data, loc='center', cellLoc='center')
                 table.auto_set_font_size(False)
                 table.set_fontsize(8)
                 table.scale(1, 1.5)
-                
                 
                 plt.title(f"Classement des Étudiants - Année {annee}\nNiveau: {niveau}", fontsize=16, fontweight='bold', pad=20)
                 
@@ -2217,19 +2383,22 @@ class MainWindow(QMainWindow):
 def main():
     app = QApplication(sys.argv)
     
+    login = LoginDialog()
     
-    app.setStyle('Fusion')
-    
-    
-    palette = QPalette()
-    palette.setColor(QPalette.Window, QColor(240, 240, 240))
-    palette.setColor(QPalette.WindowText, QColor(0, 0, 0))
-    app.setPalette(palette)
-    
-    window = MainWindow()
-    window.show()
-    
-    sys.exit(app.exec_())
+    if login.exec_() == QDialog.Accepted:
+        app.setStyle('Fusion')
+        
+        palette = QPalette()
+        palette.setColor(QPalette.Window, QColor(240, 240, 240))
+        palette.setColor(QPalette.WindowText, QColor(0, 0, 0))
+        app.setPalette(palette)
+        
+        window = MainWindow()
+        window.show()
+        
+        sys.exit(app.exec_())
+    else:
+        sys.exit(0)
 
 if __name__ == "__main__":
     main()
